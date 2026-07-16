@@ -18,20 +18,24 @@ tasks = [
 ]
 @app.get("/")
 async def root():
+    """Return a simple description message"""
     return { "name": "Task API", "version": "1.0", "endpoints": ["/tasks"] }
 
 
 @app.get("/health")
 async def health():
+    """Check System Health Status"""
     return {"status" : "ok"}
 
 
 @app.get("/tasks")
 async def getTasks():
+    """Return all the tasks"""
     return tasks
 
 @app.get("/tasks/{id}")
 async def getTask(id: int, response:Response):
+    """Return a specific task with id"""
     for task in tasks:
         if task["id"] == id:
             return task
@@ -42,6 +46,7 @@ async def getTask(id: int, response:Response):
 
 @app.post("/tasks")
 async def addTask(task: Task, response: Response):
+    """Add a new task"""
     if not task.title:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"Error" : "The title is empty!"}
@@ -58,6 +63,7 @@ async def addTask(task: Task, response: Response):
 
 @app.put("/tasks/{id}")
 async def updateTask(id: int, updatedTask: UpdateTask, response: Response):
+    """Update a specific task with id"""
     if not updatedTask.title and not updatedTask.done:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"Error" : "Empty/Invalid Body"}
@@ -74,6 +80,7 @@ async def updateTask(id: int, updatedTask: UpdateTask, response: Response):
 
 @app.delete("/tasks/{id}")
 async def deleteTask(id: int, response:Response):
+    """Delete a specific task with id"""
     for task in tasks:
         if task["id"] == id:
             tasks.remove(task)
