@@ -1,7 +1,10 @@
 from fastapi import FastAPI, status, Response
-
+from pydantic import BaseModel
 
 app = FastAPI()
+
+class TaskCreate(BaseModel):
+    title: str
 
 tasks = [
     {"id": 1, "title" : "Task 1", "done" : False},
@@ -30,3 +33,21 @@ async def getTask(id: int, response:Response):
         
     response.status_code = status.HTTP_404_NOT_FOUND
     return {"error" : f"Task {id} was not found"}
+
+
+@app.post("/tasks")
+async def addTask(payload: TaskCreate, response: Response):
+    if not payload.title:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"Error" : "The title is empty!"}
+
+    new_task = {
+        "id": tasks[-1]["id"] + 1,
+        "title": payload.title,
+        "done": False
+    }
+    tasks.append(new_task)
+    response.status_code = status.HTTP_201_CREATED
+    return new_task
+
+
