@@ -1,8 +1,13 @@
-from fastapi import FastAPI, status, Response, Depends
+from fastapi import FastAPI, status, Response, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from typing import Annotated
 
+
+class Task(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    title: str 
+    done: bool | None=None
 
 class CreateTask(BaseModel):
     title: str
@@ -11,16 +16,12 @@ class UpdateTask(BaseModel):
     title: str | None=None
     done: bool | None=None
 
-class Task(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    title: str 
-    done: bool | None=None
-
 tasks = [
     Task(title='Task 1', done=False),
     Task(title='Task 2', done=True),
     Task(title='Task 3', done=False),
 ]
+
 sqlite_url = f"sqlite:///tasks.db"
 connect_args = {"check_same_thread": False}
 engine = create_engine(sqlite_url, connect_args=connect_args, echo=True)
@@ -46,6 +47,7 @@ def on_startup():
                 session.add(task)
             session.commit()
 
+
 @app.get("/")
 async def root():
     """Return a simple description message"""
@@ -58,37 +60,25 @@ async def health():
     return {"status" : "ok"}
 
 
-@app.get("/tasks")
-async def getTasks():
+@app.get("/tasks", response_model=list[Task])
+async def getTasks(session: SessionDep) -> list[Task]:
     """Return all the tasks"""
+    tasks = session.exec(select(Task))
     return tasks
 
-@app.get("/tasks/{id}")
-async def getTask(id: int, response:Response):
+@app.get("/tasks/{taskid}", response_model=Task)
+async def getTask(taskid: int, session: SessionDep) -> Task:
     """Return a specific task with id"""
-    for task in tasks:
-        if task.id == id:
-            return task
-        
-    response.status_code = status.HTTP_404_NOT_FOUND
-    return {"error" : f"Task {id} was not found"}
+    task = session.get(Task, taskid)
+    if not task:
+        raise HTTPException(status_code=404, detail={"error": "Task not found"})
+    return task
 
 
 @app.post("/tasks")
-async def addTask(task: CreateTask, response: Response):
+async def addTask(task: CreateTask):
     """Add a new task"""
-    if not task.title:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"Error" : "The title is empty!"}
-
-    new_task = Task(
-        id = tasks[-1].id + 1,
-        title = task.title,
-        done= False
-    )
-    tasks.append(new_task)
-    response.status_code = status.HTTP_201_CREATED
-    return new_task
+    
 
 
 @app.put("/tasks/{id}")
