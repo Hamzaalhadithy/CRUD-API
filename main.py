@@ -11,7 +11,7 @@ class Task(SQLModel, table=True):
 class CreateTask(BaseModel):
     title: str
 
-class UpdateTask(BaseModel):
+class UpdateTask(SQLModel):
     title: str | None=None
     done: bool | None=None
 
@@ -87,32 +87,35 @@ async def addTask(task: CreateTask, session: SessionDep):
 
 
 
-@app.put("/tasks/{id}")
-async def updateTask(id: int, updatedTask: UpdateTask, response: Response):
+@app.put("/tasks/{taskid}")
+async def updateTask(taskid: int, updatedTask: UpdateTask, session: SessionDep) -> Task:
     """Update a specific task with id"""
+    task = session.get(Task, taskid)
+    
     if not updatedTask.title and not updatedTask.done:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"Error" : "Empty/Invalid Body"}
+        raise HTTPException(status_code=400, detail="Empty/Invalid Body")
     
-    for task in tasks:
-        if task.id == id: 
-            if updatedTask.title: task.title = updatedTask.title 
-            if updatedTask.done: task.done = updatedTask.done
-            return task
+    if not task:
+        raise HTTPException(status_code=404, detail="Id Not Found")
+    task_data = updatedTask.model_dump(exclude_unset=True)
+    print(task_data)
+    task.sqlmodel_update(task_data)
+    print(task)
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+    return task;
     
-    response.status_code = status.HTTP_404_NOT_FOUND
-    return {"Error": "Id Not Found"}
     
 
-@app.delete("/tasks/{id}")
-async def deleteTask(id: int, response:Response):
+@app.delete("/tasks/{taskid}", status_code=204)
+async def deleteTask(taskid: int, session: SessionDep):
     """Delete a specific task with id"""
-    for task in tasks:
-        if task.id == id:
-            tasks.remove(task)
-            response.status_code = status.HTTP_204_NO_CONTENT
-            return 
+    task = session.get(Task, taskid)
+    if not task:
+        raise HTTPException(status_code=404, detail="Invalid ID")
+    session.delete(task)
+    session.commit()
+    return {"Deleted Successfuly"}
     
-    response.status_code = status.HTTP_404_NOT_FOUND
-    return {"Error" : "Invalid ID"}
 
