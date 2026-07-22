@@ -20,6 +20,23 @@ python -m venv .venv && source .venv/bin/activate && pip install fastapi uvicorn
 | PUT | `/tasks/{id}` | Updates an existing task's `title` and/or `done` fields. |
 | DELETE | `/tasks/{id}` | Deletes a task by id. |
 
+#### Why SQLite was chosen
+
+- It is a simple to work with, on drive database that requires minimal setup and easy intergrate into your program. Additionaly, it has all the features you need to make your app function and test it.
+#### Where the database file is stored
+- The file will be stored locally next to the apps code files.
+
+#### Screenshot of your database viewer
+
+![DB viewer](db_view.png)
+
+
+#### One example SQL query you executed
+
+```sql
+update task set done = 1;
+```
+
 ## Example `curl -i`
 
 ```bash
