@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from typing import Annotated
 
-
 class Task(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     title: str 
@@ -15,6 +14,7 @@ class CreateTask(BaseModel):
 class UpdateTask(BaseModel):
     title: str | None=None
     done: bool | None=None
+
 
 tasks = [
     Task(title='Task 1', done=False),
@@ -75,10 +75,16 @@ async def getTask(taskid: int, session: SessionDep) -> Task:
     return task
 
 
-@app.post("/tasks")
-async def addTask(task: CreateTask):
+@app.post("/tasks", status_code=201)
+async def addTask(task: CreateTask, session: SessionDep):
     """Add a new task"""
-    
+    if not task.title:
+        raise HTTPException(status_code=400, detail="Missing Title")
+    new_task = Task(title=task.title, done=False)
+    session.add(new_task)
+    session.commit()
+    return "Task Created Successfully"
+
 
 
 @app.put("/tasks/{id}")
