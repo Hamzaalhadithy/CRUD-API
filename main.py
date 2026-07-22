@@ -1,21 +1,8 @@
-from fastapi import FastAPI, status, Response
+from fastapi import FastAPI, status, Response, Depends
 from pydantic import BaseModel
-import sqlite3
+from sqlmodel import Field, Session, SQLModel, create_engine, select
+from typing import Annotated
 
-
-create_table_stm = """CREATE TABLE IF NOT EXISTS tasks( [ID] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, [Title] NVARCHAR(100) NOT NULL, [Done] INTEGER );"""
-inset_exmps = """INSERT INTO tasks (Title, Done)  Values ('Task 1', 0), ('Task 2', 1), ('Task 3', 0) WHERE NOT EXISTS (SELEct 1 FROM tasks);"""
-db = "tasks.db"
-with sqlite3.connect(db) as conn:
-    conn = sqlite3.connect(db)
-    cur = conn.cursor()
-    cur.execute(create_table_stm)
-    cur.execute(inset_exmps)
-    conn.commit()
-    print("tables created successfully")
-
-
-app = FastAPI()
 
 class CreateTask(BaseModel):
     title: str
@@ -24,16 +11,40 @@ class UpdateTask(BaseModel):
     title: str | None=None
     done: bool | None=None
 
-class Task(BaseModel):
-    id: int
-    title: str
+class Task(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    title: str 
     done: bool | None=None
-# 
-# tasks = [
-#     Task(id=1, title='Task 1', done=False),
-#     Task(id=2, title='Task 2', done=False),
-#     Task(id=3, title='Task 3', done=False),
-# ]
+
+tasks = [
+    Task(title='Task 1', done=False),
+    Task(title='Task 2', done=True),
+    Task(title='Task 3', done=False),
+]
+sqlite_url = f"sqlite:///tasks.db"
+connect_args = {"check_same_thread": False}
+engine = create_engine(sqlite_url, connect_args=connect_args, echo=True)
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
+app = FastAPI()
+
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+    with Session(engine) as session:
+        exists = session.exec(select(Task)).first()
+        if  (exists == None): 
+            for task in tasks:
+                session.add(task)
+            session.commit()
 
 @app.get("/")
 async def root():
