@@ -2,6 +2,10 @@ from fastapi import FastAPI, status, Response, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from typing import Annotated
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 class Task(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -22,9 +26,8 @@ tasks = [
     Task(title='Task 3', done=False),
 ]
 
-sqlite_url = f"sqlite:///tasks.db"
-connect_args = {"check_same_thread": False}
-engine = create_engine(sqlite_url, connect_args=connect_args, echo=True)
+
+engine = create_engine(os.getenv("DATEBASE_URL"),  echo=True)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
