@@ -62,7 +62,7 @@ async def health():
     """Check System Health Status"""
     return {"status" : "ok"}
 
-
+# No need to update query since sqlmodel is an orm
 @app.get("/tasks", response_model=list[Task])
 async def getTasks(session: SessionDep) -> list[Task]:
     """Return all the tasks"""
