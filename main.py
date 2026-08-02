@@ -77,7 +77,7 @@ async def getTask(taskid: int, session: SessionDep) -> Task:
         raise HTTPException(status_code=404, detail={"error": "Task not found"})
     return task
 
-
+# No need to update query since sqlmodel is an orm
 @app.post("/tasks", status_code=201)
 async def addTask(task: CreateTask, session: SessionDep):
     """Add a new task"""
@@ -89,7 +89,7 @@ async def addTask(task: CreateTask, session: SessionDep):
     return "Task Created Successfully"
 
 
-
+# No need to update query since sqlmodel is an orm
 @app.put("/tasks/{taskid}")
 async def updateTask(taskid: int, updatedTask: UpdateTask, session: SessionDep) -> Task:
     """Update a specific task with id"""
