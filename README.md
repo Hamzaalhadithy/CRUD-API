@@ -78,3 +78,7 @@ Add function description for swagger ui
 2. Ai added detailed descriptions for the swagger-ui in the classes and the functions.
 
 3. Ai specified all the return types for the functions, and seperated the success returns in the functions and the error ones raising Http exception which improves the code readability and testability. 
+
+
+## Postgres Runs on Docker
+![Docker](docker_post.png)
