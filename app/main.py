@@ -27,7 +27,7 @@ tasks = [
 ]
 
 
-engine = create_engine(os.getenv("DATEBASE_URL"),  echo=True)
+engine = create_engine(os.getenv("DATABASE_URL"),  echo=True)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
