@@ -82,3 +82,10 @@ Add function description for swagger ui
 
 ## Postgres Runs on Docker
 ![Docker](docker_post.png)
+
+### What this is the one command to run everything 
+``` docker compose up  ```
+
+### Postgres DB tables and table data
+![db_info](db_info.png)
+
